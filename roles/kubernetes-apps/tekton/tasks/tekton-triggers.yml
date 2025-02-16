@@ -1,0 +1,24 @@
+# Tekton triggers 설치
+- name: Tekton | Clean up previous tekton-dashboard manifest
+  file:
+    path: "{{ kube_config_dir}}/tekton-triggers-release.yaml"
+    state: absent
+
+- name: Tekton | Download tekton triggers manifest
+  get_url:
+    url: "{{ tekton_triggers_release_url }}"
+    dest: "{{ kube_config_dir }}/tekton-triggers-release.yaml"
+  register: tekton_triggers_manifest
+  when: tekton_enabled | default(false)
+
+- name: Tekton | Apply tekton triggers manifest
+  shell: "{{ bin_dir }}/kubectl apply -f {{ kube_config_dir }}/tekton-triggers-release.yaml"
+  when:
+    - tekton_enabled | default(false)
+    - not tekton_triggers_manifest.failed | default(false)
+
+- name: Tekton | Apply tekton triggers - interceptors
+  shell: "{{ bin_dir }}/kubectl apply -f https://storage.googleapis.com/tekton-releases/triggers/previous/{{ tekton_triggers_version }}/interceptors.yaml"
+  when:
+    - tekton_enabled | default(false)
+    - not tekton_triggers_manifest.failed | default(false)
