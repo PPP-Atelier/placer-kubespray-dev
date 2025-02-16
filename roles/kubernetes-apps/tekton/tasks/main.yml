@@ -1,0 +1,24 @@
+# install
+- include_tasks: tekton-pipelines.yml
+  when:
+    - tekton_enabled | default(false)
+    - inventory_hostname == groups['kube_control_plane'][0]
+  tags:
+    - apps
+    - tekton
+
+- include_tasks: tekton-dashboard.yml
+  when:
+    - tekton_enabled | default(false)
+    - inventory_hostname == groups['kube_control_plane'][0]
+  tags:
+    - apps
+    - tekton
+
+- include_tasks: tekton-triggers.yml
+  when:
+    - tekton_enabled | default(false)
+    - inventory_hostname == groups['kube_control_plane'][0]
+  tags:
+    - apps
+    - tekton

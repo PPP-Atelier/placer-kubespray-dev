@@ -1,0 +1,48 @@
+---
+- name: Tekton | Check if tekton namespace exists
+  k8s_info:
+    api_version: v1
+    kind: Namespace
+    name: "{{ tekton_namespace | default('tekton-pipelines') }}"
+  register: tekton_ns
+
+- name: Tekton | Create tekton namespace
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ tekton_namespace | default('tekton-pipelines') }}"
+  when:
+    - tekton_ns.resources | length == 0
+    - tekton_enabled | default(false)
+
+- name: Tekton | Clean up previous tekton manifest
+  file:
+    path: "{{ kube_config_dir }}/tekton-release.yaml"
+    state: absent
+
+- name: Tekton | Download tekton manifest
+  get_url:
+    url: "{{ tekton_release_url }}"
+    dest: "{{ kube_config_dir }}/tekton-release.yaml"
+    mode: 0644
+  register: tekton_manifest
+  when: tekton_enabled | default(false)
+
+- name: Tekton | Apply tekton manifest
+  shell: "{{ bin_dir }}/kubectl apply -f {{ kube_config_dir }}/tekton-release.yaml"
+  when:
+    - tekton_enabled | default(false)
+    - not tekton_manifest.failed | default(false)
+
+#- name: Tekton | Wait for tekton pipelines to be ready
+#  shell: "{{ bin_dir }}/kubectl get pods -n {{ tekton_namespace }} -o jsonpath='{.items[*].status.containerStatuses[*].ready}' | tr ' ' '\n' | sort -u"
+#  register: tekton_ready
+#  until: tekton_ready.stdout == 'true'
+#  retries: 60
+#  delay: 10
+#  when:
+#    - tekton_enabled | default(false)
+#    - not tekton_manifest.failed | default(false)

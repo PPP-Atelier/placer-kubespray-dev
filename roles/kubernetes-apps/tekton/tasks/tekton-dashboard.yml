@@ -1,0 +1,13 @@
+# Tekton Dashboard 설치
+- name: Tekton | Clean up previous tekton-dashboard manifest
+  file:
+    path: "{{ kube_config_dir }}/tekton-dashboard-release.yaml"
+    state: absent
+
+- name: Tekton | Download dashboard manifest
+  get_url:
+    url: "{{ tekton_dashboard_release_url }}"
+    dest: "{{ kube_config_dir }}/tekton-dashboard-release.yaml"
+
+- name: Tekton | Apply dashboard manifest
+  shell: "{{ bin_dir }}/kubectl apply -f {{ kube_config_dir }}/tekton-dashboard-release.yaml"
